@@ -200,8 +200,9 @@ async def get_relevant_messages(
     for uname in resolved:
         mentioned_usernames.add(uname)
 
-    logger.info(f"Mentioned IDs: {mentioned_ids}")
-    logger.info(f"Mentioned usernames: {mentioned_usernames}")
+    if mentioned_ids or mentioned_usernames:
+        logger.info(f"Mentioned IDs: {mentioned_ids}")
+        logger.info(f"Mentioned usernames: {mentioned_usernames}")
 
     # STRICT MODE: User was explicitly mentioned
     mentioned_ids = list(mentioned_ids)
@@ -362,8 +363,6 @@ async def ask_gemini(system_instruction: str, prompt: str, logger: any) -> str:
 # Slash Command: /ask-sophia
 @app.command("/ask-sophia")
 async def slash_ask_sophia(ack, body, say, logger):
-    logger.info("FULL_SLASH_PAYLOAD:")
-    logger.info(body)
     await ack()
 
     question = body.get("text", "").strip()
@@ -388,10 +387,57 @@ async def slash_ask_sophia(ack, body, say, logger):
             text=f"*You asked:* {question}\n\n*Sophia says:*\n{answer}",
             thread_ts=thread_ts,
         )
-        # await say(f"*You asked:* {question}\n\n*Sophia says:*\n{answer}")
     except Exception as e:
         logger.error(f"Gemini error in slash command: {e}")
         await say("Sophia ran into an issue while answering that.")
+
+
+# Slash Command: /joke-sophia
+@app.command("/joke-sophia")
+async def slash_joke_sophia(ack, body, logger):
+    await ack()
+
+    channel_id = body.get("channel_id")
+    user_id = body.get("user_id")
+    thread_ts = (
+        body.get("thread_ts")
+        or body.get("message_ts")
+        or body.get("container", {}).get("thread_ts")
+    )
+
+    # Build the request for Gemini
+    joke_prompt = """
+        You are Sophia, a chaotic but helpful slack bot.
+        Generate one short programming joke.
+        Keep it concise, witty, and safe for work.
+        It should not require explanation.
+        Return ONLY the joke.
+    """
+
+    try:
+        # Call Gemini using your existing helper
+        joke = await ask_gemini(
+            system_instruction="You are Sophia, an AI slack bot assistant.",
+            prompt=joke_prompt,
+            logger=logger,
+        )
+
+        if not joke:
+            raise ValueError("Empty Gemini response")
+
+    except Exception as e:
+        logger.error(f"Gemini joke error: {e}")
+        joke = "Why do programmers hate nature? Too many bugs."
+
+    # Send ephemeral joke to user only
+    await slack_client.chat_postEphemeral(
+        channel=channel_id,
+        user=user_id,
+        text=f":robot_face: *Sophia's programming joke:*\n>{joke}",
+        thread_ts=thread_ts,
+    )
+
+    logger.info(f"/joke-sophia joke sent to {user_id}: {joke}")
 
 
 # Event: @Sophia mention
@@ -414,13 +460,10 @@ async def handle_mention(event, say, logger):
 
     try:
         answer = await ask_gemini(SYSTEM_INSTRUCTION, prompt, logger)
-        await slack_client.chat_postEphemeral(
-            channel=channel_id,
-            user=user_id,
-            text=f"*You asked:* {question}\n\n*Sophia says:*\n{answer}",
-            thread_ts=thread_ts,
+        await say(
+            f"*You mentioned:* {question}\n\n*Sophia says:*\n{answer}", 
+            thread_ts=thread_ts
         )
-        # await say(f"*You mentioned:* {question}\n\n*Sophia says:*\n{answer}")
     except Exception as e:
         logger.error(f"Gemini error in mention handler: {e}")
         await say("I had trouble handling that mention.")

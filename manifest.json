@@ -17,7 +17,12 @@
         "slash_commands": [
             {
                 "command": "/ask-sophia",
-                "description": "Interact with the Sophia.",
+                "description": "Ask Sophia a question.",
+                "should_escape": false
+            },
+            {
+                "command": "/joke-sophia",
+                "description": "Get a joke from Sophia.",
                 "should_escape": false
             }
         ]
