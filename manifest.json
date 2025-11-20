@@ -24,6 +24,11 @@
                 "command": "/joke-sophia",
                 "description": "Get a joke from Sophia.",
                 "should_escape": false
+            },
+            {
+                "command": "/hungry-sophia",
+                "description": "Get a food idea from Sophia.",
+                "should_escape": false
             }
         ]
     },

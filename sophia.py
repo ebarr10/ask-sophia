@@ -440,6 +440,81 @@ async def slash_joke_sophia(ack, body, logger):
     logger.info(f"/joke-sophia joke sent to {user_id}: {joke}")
 
 
+# Slash Command: /hungry-sophia
+@app.command("/hungry-sophia")
+async def slash_hungry_sophia(ack, body, logger):
+    await ack()
+
+    channel_id = body.get("channel_id")
+    user_id = body.get("user_id")
+    thread_ts = (
+        body.get("thread_ts")
+        or body.get("message_ts")
+        or body.get("container", {}).get("thread_ts")
+    )
+
+    # 1% chance to trigger HARD MODE
+    import random
+
+    hard_mode = random.random() < 0.01
+
+    if hard_mode:
+        prompt = """
+            You are Sophia, a chaotic Slack bot.
+            The user asked: "What should I eat?"
+
+            Generate ONE extremely over-the-top, 
+            needlessly complex, 'final boss' level food idea.
+            
+            Requirements:
+            - Must sound absolutely ridiculous.
+            - Must be borderline impossible for a normal person.
+            - Should lightly tease the user for asking.
+            - Keep it short (2-4 sentences max).
+            - You MUST end the response with: "Good luck."
+        """
+    else:
+        prompt = """
+            You are Sophia, a helpful but slightly sarcastic Slack bot.
+            The user asked: "What should I eat?"
+
+            Generate ONE practical suggestion.
+            Choose one of:
+            - simple homemade meal
+            - easy snack
+            - fast food idea
+            - cheap/easy grocery-store food
+            - lazy meal hacks (ramen + egg, tortilla pizzas, etc.)
+
+            Keep it short and relatable.
+            Only return the food idea, not explanations.
+        """
+
+    try:
+        suggestion = await ask_gemini(
+            system_instruction="You are Sophia, an AI who decides meals.",
+            prompt=prompt,
+            logger=logger,
+        )
+
+        if not suggestion:
+            raise ValueError("Empty Gemini response")
+
+    except Exception as e:
+        logger.error(f"Sophia eat error: {e}")
+        suggestion = "Peanut butter toast. It's foolproof."
+
+    # Final ephemeral response
+    await slack_client.chat_postEphemeral(
+        channel=channel_id,
+        user=user_id,
+        text=f":fork_and_knife: *Sophia thinks you should eat:*\n>{suggestion}",
+        thread_ts=thread_ts,
+    )
+
+    logger.info(f"/eat-sophia suggestion for {user_id}: {suggestion}")
+
+
 # Event: @Sophia mention
 @app.event("app_mention")
 async def handle_mention(event, say, logger):
