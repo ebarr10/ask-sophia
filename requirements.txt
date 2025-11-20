@@ -1,0 +1,5 @@
+slack-bolt==1.18.0
+slack-sdk==3.27.1
+google-genai
+python-dotenv==1.0.1
+aiohttp==3.8.5

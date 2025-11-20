@@ -1,0 +1,107 @@
+{
+    "display_information": {
+        "name": "Sophia",
+        "description": "Powered by wisdom, caffeine, and the questionable Slack history.",
+        "background_color": "#242c30"
+    },
+    "features": {
+        "app_home": {
+            "home_tab_enabled": true,
+            "messages_tab_enabled": true,
+            "messages_tab_read_only_enabled": false
+        },
+        "bot_user": {
+            "display_name": "Sophia",
+            "always_online": true
+        },
+        "slash_commands": [
+            {
+                "command": "/ask-sophia",
+                "description": "Interact with the Sophia.",
+                "should_escape": false
+            }
+        ]
+    },
+    "oauth_config": {
+        "scopes": {
+            "bot": [
+                "app_mentions:read",
+                "channels:history",
+                "channels:read",
+                "chat:write",
+                "chat:write.public",
+                "commands",
+                "groups:history",
+                "groups:read",
+                "im:history",
+                "im:read",
+                "im:write",
+                "mpim:history",
+                "mpim:read",
+                "mpim:write",
+                "users:read"
+            ]
+        }
+    },
+    "settings": {
+        "event_subscriptions": {
+            "bot_events": [
+                "app_home_opened",
+                "app_mention",
+                "function_executed",
+                "message.channels",
+                "message.groups",
+                "message.im",
+                "message.mpim"
+            ]
+        },
+        "interactivity": {
+            "is_enabled": true
+        },
+        "org_deploy_enabled": true,
+        "socket_mode_enabled": true,
+        "token_rotation_enabled": false,
+        "hermes_app_type": "remote",
+        "function_runtime": "remote"
+    },
+    "functions": {
+        "summary_function": {
+            "title": "Sophias Custom Function",
+            "description": "Interact with an AI Chatbot. Sophia must be a channel member.",
+            "input_parameters": {
+                "user_context": {
+                    "type": "slack#/types/user_context",
+                    "title": "User",
+                    "description": "Tag the user that will be notified when bot responds",
+                    "is_required": true,
+                    "hint": "Tag user who ran the workflow",
+                    "name": "user_context"
+                },
+                "channel_id": {
+                    "type": "slack#/types/channel_id",
+                    "title": "Channel",
+                    "description": "Channel that user joined",
+                    "is_required": true,
+                    "hint": "Input channel that user joined",
+                    "name": "channel_id"
+                }
+            },
+            "output_parameters": {
+                "user_context": {
+                    "type": "slack#/types/user_context",
+                    "title": "User",
+                    "description": "User that completed the workflow",
+                    "is_required": true,
+                    "name": "user_context"
+                },
+                "response": {
+                    "type": "string",
+                    "title": "Summary",
+                    "description": "AI-generated response to any commands initiated",
+                    "is_required": true,
+                    "name": "response"
+                }
+            }
+        }
+    }
+}

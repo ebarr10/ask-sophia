@@ -10,7 +10,7 @@ This project was built as part of a hackathon at **Foreman**.
 - Automatically suggests answers based on past Slack conversations  
 - Helps reduce repeated questions  
 - Integrates seamlessly with Slack using the [Bolt.js](https://slack.dev/bolt-js) framework
-- Can be extended with custom logic or AI integrations (e.g. OpenAI API)  
+- Can be extended with custom logic or AI integrations (e.g. OpenAI API, Gemini, etc)  
 
 ---
 
