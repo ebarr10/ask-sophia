@@ -515,6 +515,56 @@ async def slash_hungry_sophia(ack, body, logger):
     logger.info(f"/eat-sophia suggestion for {user_id}: {suggestion}")
 
 
+# Slash Command: /roast-sophia
+@app.command("/roast-sophia")
+async def slash_roast_sophia(ack, body, logger):
+    await ack()
+
+    channel_id = body.get("channel_id")
+    user_id = body.get("user_id")
+    thread_ts = (
+        body.get("thread_ts")
+        or body.get("message_ts")
+        or body.get("container", {}).get("thread_ts")
+    )
+
+    prompt = """
+        You are Sophia, a chaotic Slack bot who roasts users in a funny, harmless way.
+
+        Generate ONE short roast (1-2 sentences max).
+
+        Rules:
+        - Must be playful, not actually offensive.
+        - Should sound like an internet meme or TikTok-level insult.
+        - Avoid anything about protected classes, appearance, or anything sensitive.
+        - Think: "You're dog water", "Built like a failed unit test", etc.
+        - ONLY return the roast, nothing else.
+    """
+
+    try:
+        roast = await ask_gemini(
+            system_instruction="You are Sophia, a chaotic AI who roasts users.",
+            prompt=prompt,
+            logger=logger,
+        )
+
+        if not roast:
+            raise ValueError("Empty Gemini response")
+
+    except Exception as e:
+        logger.error(f"Sophia roast error: {e}")
+        roast = "You're the human equivalent of a semicolon in Python."
+
+    await slack_client.chat_postEphemeral(
+        channel=channel_id,
+        user=user_id,
+        text=f":fire: *Sophia has spoken:*\n>{roast}",
+        thread_ts=thread_ts,
+    )
+
+    logger.info(f"/roast-sophia roast for {user_id}: {roast}")
+
+
 # Event: @Sophia mention
 @app.event("app_mention")
 async def handle_mention(event, say, logger):
