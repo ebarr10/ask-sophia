@@ -34,6 +34,11 @@
                 "command": "/roast-sophia",
                 "description": "Get a roast from Sophia.",
                 "should_escape": false
+            },
+            {
+                "command": "/roast-someone-sophia",
+                "description": "Roast someone through Sophia.",
+                "should_escape": false
             }
         ]
     },

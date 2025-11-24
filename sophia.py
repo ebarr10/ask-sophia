@@ -565,6 +565,83 @@ async def slash_roast_sophia(ack, body, logger):
     logger.info(f"/roast-sophia roast for {user_id}: {roast}")
 
 
+# Slash Command: /roast-someone-sophia
+@app.command("/roast-someone-sophia")
+async def slash_roast_someone_sophia(ack, body, say, logger):
+    await ack()
+
+    channel_id = body.get("channel_id")
+    user_id = body.get("user_id")
+    command_text = body.get("text", "").strip()
+    thread_ts = (
+        body.get("thread_ts")
+        or body.get("message_ts")
+        or body.get("container", {}).get("thread_ts")
+    )
+
+    # Extract mentioned users from command text
+    mentioned_users = await extract_users(command_text)
+
+    if not mentioned_users:
+        await slack_client.chat_postEphemeral(
+            channel=channel_id,
+            user=user_id,
+            text=":warning: You need to mention a user to roast! Usage: `/roast-sophia-someone @username`",
+            thread_ts=thread_ts,
+        )
+        return
+
+    # Get the first mentioned user
+    target_user = mentioned_users[0]
+    target_user_id = target_user.get("id")
+
+    # Resolve username if not already available
+    target_username = target_user.get("username")
+    if not target_username and target_user_id:
+        usernames = await resolve_usernames([target_user_id])
+        target_username = usernames[0] if usernames else target_user_id
+    elif not target_username:
+        target_username = "someone"
+
+    prompt = f"""
+        You are Sophia, a chaotic Slack bot who roasts users in a funny, harmless way.
+
+        The user to roast is: {target_username}
+
+        Generate ONE short roast (1-2 sentences max) specifically about {target_username}.
+
+        Rules:
+        - Must be playful, not actually offensive.
+        - Should sound like an internet meme or TikTok-level insult.
+        - Avoid anything about protected classes, appearance, or anything sensitive.
+        - Think: "You're dog water", "Built like a failed unit test", etc.
+        - Make it personal to {target_username} but keep it light and fun.
+        - ONLY return the roast, nothing else.
+    """
+
+    try:
+        roast = await ask_gemini(
+            system_instruction="You are Sophia, a chaotic AI who roasts users.",
+            prompt=prompt,
+            logger=logger,
+        )
+
+        if not roast:
+            raise ValueError("Empty Gemini response")
+
+    except Exception as e:
+        logger.error(f"Sophia roast error: {e}")
+        roast = f"{target_username} is the human equivalent of a semicolon in Python."
+
+    # Post publicly so everyone can see the roast
+    await say(
+        text=f":fire: *Sophia roasts <@{target_user_id}>:*\n>{roast}",
+        thread_ts=thread_ts,
+    )
+
+    logger.info(f"/roast-sophia-someone roast for {target_username} ({target_user_id}): {roast}")
+
+
 # Event: @Sophia mention
 @app.event("app_mention")
 async def handle_mention(event, say, logger):
