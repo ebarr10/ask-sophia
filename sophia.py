@@ -586,7 +586,7 @@ async def slash_roast_someone_sophia(ack, body, say, logger):
         await slack_client.chat_postEphemeral(
             channel=channel_id,
             user=user_id,
-            text=":warning: You need to mention a user to roast! Usage: `/roast-sophia-someone @username`",
+            text=":warning: You need to mention a user to roast! Usage: `/roast-someone-sophia @username`",
             thread_ts=thread_ts,
         )
         return
@@ -634,12 +634,22 @@ async def slash_roast_someone_sophia(ack, body, say, logger):
         roast = f"{target_username} is the human equivalent of a semicolon in Python."
 
     # Post publicly so everyone can see the roast
-    await say(
-        text=f":fire: *Sophia roasts <@{target_user_id}>:*\n>{roast}",
-        thread_ts=thread_ts,
-    )
+    try:
+        await say(
+            text=f":fire: *Sophia roasts <@{target_user_id}>:*\n>{roast}",
+            thread_ts=thread_ts,
+        )
+    except Exception as e:
+        logger.error(f"Failed to post roast: {e}")
+        # Fallback: try posting as ephemeral to the user
+        await slack_client.chat_postEphemeral(
+            channel=channel_id,
+            user=user_id,
+            text=f":warning: Could not post roast in this conversation. Error: {str(e)}\n\n*The roast was:*\n>{roast}",
+            thread_ts=thread_ts,
+        )
 
-    logger.info(f"/roast-sophia-someone roast for {target_username} ({target_user_id}): {roast}")
+    logger.info(f"/roast-someone-sophia roast for {target_username} ({target_user_id}): {roast}")
 
 
 # Event: @Sophia mention
